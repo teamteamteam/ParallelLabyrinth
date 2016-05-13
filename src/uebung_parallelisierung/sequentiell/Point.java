@@ -9,18 +9,18 @@ package uebung_parallelisierung.sequentiell;
 
 import java.io.Serializable;
 
-final class Point implements Serializable {
+public final class Point implements Serializable {
 	private static final long serialVersionUID = 1L;
-	final int x, y;
+	public final int x, y;
 	Point(int x, int y) {
 		this.x = x;
 		this.y = y;
 	}
 
-	int getX() { return x; }
-	int getY() { return y; }
+	public int getX() { return x; }
+	public int getY() { return y; }
 
-	final Point getNeighbor(Direction dir) {
+	public final Point getNeighbor(Direction dir) {
 		return new Point(x+dir.dx, y+dir.dy);
 	}
 	

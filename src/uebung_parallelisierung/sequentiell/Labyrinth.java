@@ -33,6 +33,8 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 
+import uebung_parallelisierung.parallel.ParallelSolver;
+
 
 
 final public class Labyrinth extends JPanel  {
@@ -42,7 +44,7 @@ final public class Labyrinth extends JPanel  {
 	 */
 	private static final long serialVersionUID = 1L;
 
-	private static class Grid implements Serializable{
+	public static class Grid implements Serializable {
 		private static final long serialVersionUID = 1L;
 
 		/**
@@ -54,10 +56,10 @@ final public class Labyrinth extends JPanel  {
 		 * attributes are not private).
 		 */
 		
-		final int width;  // total number of cells in x direction
-		final int height;  // total number of cells in y direction
-		final Point start;
-		final Point end;
+		public final int width;  // total number of cells in x direction
+		public final int height;  // total number of cells in y direction
+		public final Point start;
+		public final Point end;
 		
 		final byte[][] passages;
 		/*		
@@ -91,10 +93,10 @@ final public class Labyrinth extends JPanel  {
 	private static final double CYCLE_CREATION_PROBABILITY = 0.01;
 	
 	// The default size of the labyrinth (i.e. unless program is invoked with size arguments):
-	private static final int DEFAULT_WIDTH_IN_CELLS = 5000;
-	private static final int DEFAULT_HEIGHT_IN_CELLS = 5000;
+	private static final int DEFAULT_WIDTH_IN_CELLS = 50;
+	private static final int DEFAULT_HEIGHT_IN_CELLS = 50;
 	
-	private final Grid grid;
+	public final Grid grid;
 	
 	// For each cell in the labyrinth: Has solve() visited it yet?
 	private final boolean[][] visited; 
@@ -155,7 +157,7 @@ final public class Labyrinth extends JPanel  {
 			   0 <= p.getY() && p.getY() < grid.height;
 	}
 
-	private boolean hasPassage(Point from, Point to) {
+	public boolean hasPassage(Point from, Point to) {
 		if (!contains(from) ||  !contains(to)) {
 			return false;
 		}
@@ -170,7 +172,7 @@ final public class Labyrinth extends JPanel  {
 		return false;  // To suppress warning about undefined return value
 	}
 
-	private boolean visitedBefore(Point p) {
+	public boolean visitedBefore(Point p) {
 		boolean result = visited[p.getX()][p.getY()];
 		// DEBUG
 //		if (result)
@@ -178,7 +180,7 @@ final public class Labyrinth extends JPanel  {
 		return result;
 	}
 
-	private void visit(Point p) {
+	public void visit(Point p) {
 		// DEBUG System.out.println("Visiting " + p);
 		visited[p.getX()][p.getY()] = true;
 	}
@@ -208,56 +210,8 @@ final public class Labyrinth extends JPanel  {
 	/**
 	 * @return Returns a path through the labyrinth from start to end as an array, or null if no solution exists
 	 */
-	public Point[] solve() {
-
-		Point current = grid.start;
-		ArrayDeque<Point> pathSoFar = new ArrayDeque<Point>();  // Path from start to just before current
-
-		ArrayDeque<PointAndDirection> backtrackStack = new ArrayDeque<PointAndDirection>();
-		// Used as a stack: Branches not yet taken; solver will backtrack to these branching points later
-		// Is it faster to allocate backtrackStack with width*height elements right away?
-
-
-		while (!current.equals(grid.end)) {
-			Point next = null;
-			visit(current);
-
-			// Use first random unvisited neighbor as next cell, push others on the backtrack stack: 
-			Direction[] dirs = Direction.values();
-			for (Direction directionToNeighbor: dirs) {
-				Point neighbor = current.getNeighbor(directionToNeighbor);
-				if (hasPassage(current, neighbor) && !visitedBefore(neighbor)) {
-					if (next == null) // 1st unvisited neighbor
-						next = neighbor;
-					else // 2nd or higher unvisited neighbor: Save neighbor as starting cell for a later backtracking
-						backtrackStack.push(new PointAndDirection(neighbor, directionToNeighbor.opposite));
-				}
-			}
-			// Advance to next cell, if any:
-			if (next != null) {
-				// DEBUG System.out.println("Advancing from " + current + " to " + next);
-				pathSoFar.addLast(current);
-				current = next;
-			} else { 
-				// current has no unvisited neighbor: Backtrack, if possible
-				if (backtrackStack.isEmpty())
-					return null; // No more backtracking avaible: No solution exists
-
-				// Backtrack: Continue with cell saved at latest branching point:
-				PointAndDirection pd = backtrackStack.pop();
-				current = pd.getPoint();
-				Point branchingPoint = current.getNeighbor(pd.getDirectionToBranchingPoint());
-				// DEBUG System.out.println("Backtracking to " +  branchingPoint);
-				// Remove the dead end from the top of pathSoFar, i.e. all cells after branchingPoint:
-				while (!pathSoFar.peekLast().equals(branchingPoint)) {
-					// DEBUG System.out.println("    Going back before " + pathSoFar.peekLast());
-					pathSoFar.removeLast();
-				}
-			}
-		}
-		pathSoFar.addLast(current);
-		 // Point[0] is only for making the return value have type Point[] (and not Object[]):
-		return pathSoFar.toArray(new Point[0]); 
+	public Point[] solve(LabyrinthSolver labsolver) {
+		return labsolver.solve(this);
 	}
 	
 	@Override
@@ -398,11 +352,28 @@ private static Labyrinth makeAndSaveLabyrinth(String[] args) {
  * is used; else the first two arguments are optional numbers giving the width and height of a new
  * labyrinth to be constructed.
  */
-	public static void main(String[] args) {
+	public static void main(String[] inputArgs) {
 		JFrame frame = null;
 		
+		String solverName = inputArgs[0];
+		// remove first param and pass rest on to programm
+		String[] args = new String[inputArgs.length-1];
+		for(int i = 1; i < inputArgs.length; i++) {
+			args[i-1] = inputArgs[i];
+		}
+
 		Labyrinth labyrinth = makeAndSaveLabyrinth(args);
-						
+
+		// Build the right solver.
+		LabyrinthSolver solver = null;
+		if(solverName.equals("seq")) {
+			solver = new NonParallelSolver();
+		} else if(solverName.equals("par")) {
+			ParallelSolver p = new ParallelSolver();
+			p.initializeDatastructure(labyrinth);
+			solver = p;
+		}
+		
 		if (labyrinth.smallEnoughToDisplay()) {
 			frame = new JFrame("Sequential labyrinth solver");
 			frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -439,10 +410,10 @@ private static Labyrinth makeAndSaveLabyrinth(String[] args) {
 			
 			frame.setVisible(true); // will draw the labyrinth (without solution)
 			labyrinth.print();
-		} 
+		}
 		
 		long startTime = System.currentTimeMillis();		
-		labyrinth.solution = labyrinth.solve();
+		labyrinth.solution = labyrinth.solve(solver);
 		long endTime = System.currentTimeMillis();
 		System.out.println("Computed sequential solution of length " + labyrinth.solution.length + " to labyrinth of size " + 
 				labyrinth.grid.width + "x" + labyrinth.grid.height + " in " + (endTime - startTime) + "ms.");
