@@ -47,7 +47,7 @@ public class LimitedParallelSolver implements LabyrinthSolver {
 		this.fjk.execute(this.initialTask);
 		while(this.initialTask.isDone() == false) {
 			try {
-				Thread.sleep(1000);
+				Thread.sleep(100);
 			} catch(InterruptedException ie) {
 				System.err.println(ie);
 			}
