@@ -33,6 +33,7 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 
+import uebung_parallelisierung.parallel.LimitedParallelSolver;
 import uebung_parallelisierung.parallel.ParallelSolver;
 
 
@@ -93,8 +94,8 @@ final public class Labyrinth extends JPanel  {
 	private static final double CYCLE_CREATION_PROBABILITY = 0.01;
 	
 	// The default size of the labyrinth (i.e. unless program is invoked with size arguments):
-	private static final int DEFAULT_WIDTH_IN_CELLS = 50;
-	private static final int DEFAULT_HEIGHT_IN_CELLS = 50;
+	private static final int DEFAULT_WIDTH_IN_CELLS = 5000;
+	private static final int DEFAULT_HEIGHT_IN_CELLS = 5000;
 	
 	public final Grid grid;
 	
@@ -372,6 +373,10 @@ private static Labyrinth makeAndSaveLabyrinth(String[] args) {
 			ParallelSolver p = new ParallelSolver();
 			p.initializeDatastructure(labyrinth);
 			solver = p;
+		} else if(solverName.equals("parlim")) {
+			LimitedParallelSolver p = new LimitedParallelSolver();
+			p.initializeDatastructure(labyrinth);
+			solver = p;
 		}
 		
 		if (labyrinth.smallEnoughToDisplay()) {
@@ -427,5 +432,6 @@ private static Labyrinth makeAndSaveLabyrinth(String[] args) {
 			System.out.println("Solution correct :-)"); 
 		else
 			System.out.println("Solution incorrect :-(");
+		System.out.println(solverName);
 	}
 }
