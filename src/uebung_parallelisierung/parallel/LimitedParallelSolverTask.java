@@ -4,27 +4,37 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.ForkJoinTask;
-import java.util.concurrent.RecursiveTask;
 
 import uebung_parallelisierung.sequentiell.Direction;
 import uebung_parallelisierung.sequentiell.Labyrinth.Grid;
 import uebung_parallelisierung.sequentiell.Point;
 import uebung_parallelisierung.sequentiell.PointAndDirection;
 
-public class LimitedParallelSolverTask<T> extends RecursiveTask<T> {
+public class LimitedParallelSolverTask<T> extends ForkJoinTask<T> {
 
 	private static final long serialVersionUID = 1L;
+	private T taskResult;
+	
+	private volatile T earlyResult;
+	private volatile boolean haveEarlyResult;
+
+	private LimitedParallelSolverTask<ArrayDeque<Point>> parentTask;
 	
 	private LimitedParallelSolver dataHolder;
-	
 	private Grid grid;
 	private Point startPoint;
 	private ArrayDeque<Point> pathSoFar;
+	private ArrayDeque<PointAndDirection> backtrackStack;
 	
 	private Collection<ForkJoinTask<ArrayDeque<Point>>> forkedTasks;
 
-	private ArrayDeque<PointAndDirection> backtrackStack;
+	// Constructor with parentTask reference
+	public LimitedParallelSolverTask(Point startPoint, Grid grid, ArrayDeque<Point> pathSoFar, LimitedParallelSolver dataHolder, LimitedParallelSolverTask<ArrayDeque<Point>> parentTask) {
+		this(startPoint, grid, pathSoFar, dataHolder); // Invoke default constructor (avoid redundant code)
+		this.parentTask = parentTask;
+	}
 
+	// Default constructor for initial Task
 	public LimitedParallelSolverTask(Point startPoint, Grid grid, ArrayDeque<Point> pathSoFar, LimitedParallelSolver dataHolder) {
 		this.backtrackStack = new ArrayDeque<PointAndDirection>();
 		this.forkedTasks = new ArrayList<ForkJoinTask<ArrayDeque<Point>>>(); 
@@ -32,8 +42,12 @@ public class LimitedParallelSolverTask<T> extends RecursiveTask<T> {
 		this.grid = grid;
 		this.pathSoFar = pathSoFar;
 		this.dataHolder = dataHolder;
+		this.parentTask = null;
+		
+		this.haveEarlyResult = false;
+		this.earlyResult = null;
 	}
-	
+
 	private ArrayDeque<Point> collectResults() {
 		// I did not make it, check the others.
 		for(ForkJoinTask<ArrayDeque<Point>> fjt : this.forkedTasks) {
@@ -52,14 +66,18 @@ public class LimitedParallelSolverTask<T> extends RecursiveTask<T> {
 		Collection<ForkJoinTask<ArrayDeque<Point>>> newTasks = new ArrayList<ForkJoinTask<ArrayDeque<Point>>>();
 		Point current = this.startPoint;
 		Direction[] dirs = Direction.values(); // static data
-		while (!current.equals(this.grid.end)) {
+		while(!current.equals(this.grid.end)) {
+			if(this.haveEarlyResult) {
+				System.out.println("I was completed early, returning result! :-)");
+				return this.earlyResult;
+			}
 			// First, mark current field as visited!
 			if(this.dataHolder.tryVisit(current)) {
 				this.pathSoFar.add(current);
 			} else {
 				// If that failed try backtracking ...
 				if(this.backtrackStack.isEmpty()) {
-					// No result -> return null or so.
+					// No result from myself, what do i do now?
 					return (T) this.collectResults();					
 				}
 				// Backtrack: Continue with cell saved at latest branching point:
@@ -85,7 +103,7 @@ public class LimitedParallelSolverTask<T> extends RecursiveTask<T> {
 					} else {
 						// Fork for that way if possible, otherwise note for backtracking
 						if(this.dataHolder.activeThreads.tryAcquire()) {
-							ForkJoinTask<ArrayDeque<Point>> neighbourTask = new LimitedParallelSolverTask<ArrayDeque<Point>>(neighbor, this.grid, this.pathSoFar.clone(), this.dataHolder);
+							ForkJoinTask<ArrayDeque<Point>> neighbourTask = new LimitedParallelSolverTask<ArrayDeque<Point>>(neighbor, this.grid, this.pathSoFar.clone(), this.dataHolder, (LimitedParallelSolverTask<ArrayDeque<Point>>) this);
 							newTasks.add(neighbourTask);
 						} else {
 							// Note for backtracking
@@ -109,7 +127,7 @@ public class LimitedParallelSolverTask<T> extends RecursiveTask<T> {
 				// No where to go, we did not make it! :-(
 				// Try backtracking ...
 				if(this.backtrackStack.isEmpty()) {
-					// No result -> return null or so.
+					// No result from myself, what do i do now?
 					return (T) this.collectResults();					
 				}
 				// Backtrack: Continue with cell saved at latest branching point:
@@ -126,6 +144,31 @@ public class LimitedParallelSolverTask<T> extends RecursiveTask<T> {
 		 // Point[0] is only for making the return value have type Point[] (and not Object[]):
 		//return pathSoFar.toArray(new Point[0]); 
 		return (T) this.pathSoFar;
+	}
+
+	@Override
+	protected boolean exec() {
+		this.taskResult = this.compute();
+		// Only try to propagate the result to parent tasks.
+		if(this.parentTask != null && this.taskResult != null) {
+			this.parentTask.propagateSuccessfulTask((ArrayDeque<Point>) this.taskResult);
+		}
+		return true;
+	}
+
+	private void propagateSuccessfulTask(T earlyResult) {
+		this.earlyResult = earlyResult;
+		this.haveEarlyResult = true;
+	}
+
+	@Override
+	public T getRawResult() {
+		return this.taskResult;
+	}
+
+	@Override
+	protected void setRawResult(T value) {
+		this.taskResult = value;		
 	}
 
 }

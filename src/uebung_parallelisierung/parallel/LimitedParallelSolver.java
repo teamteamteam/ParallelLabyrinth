@@ -5,8 +5,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.Semaphore;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicIntegerArray;
 
 import uebung_parallelisierung.sequentiell.Labyrinth;
@@ -30,20 +28,17 @@ public class LimitedParallelSolver implements LabyrinthSolver {
 	}
 
 	public void initializeDatastructure(Labyrinth lab) {
-		this.maxThreads = 3* Runtime.getRuntime().availableProcessors() - 1;
+		this.maxThreads = Runtime.getRuntime().availableProcessors() - 1;
 		this.activeThreads  = new Semaphore(this.maxThreads);
 		this.lab = lab;
-		this.visited = new AtomicIntegerArray(this.lab.grid.width*this.lab.grid.height);//[this.lab.grid.width][this.lab.grid.height];
-		// ForkJoinTaskThreadPool bauen
+		this.visited = new AtomicIntegerArray(this.lab.grid.width*this.lab.grid.height);
 		this.fjk = new ForkJoinPool(Runtime.getRuntime().availableProcessors());
-		// Initial task bauen
 		this.initialTask = new LimitedParallelSolverTask<ArrayDeque<Point>>(lab.grid.start, lab.grid, new ArrayDeque<Point>(), this);
-
 	}
 	
 	@Override
 	public Point[] solve(Labyrinth lab) {
-		// Task initial invoken und auf Ergebnis warten
+		// Task initial starten und auf Ergebnis warten
 		this.fjk.execute(this.initialTask);
 		while(this.initialTask.isDone() == false) {
 			try {
@@ -51,8 +46,7 @@ public class LimitedParallelSolver implements LabyrinthSolver {
 			} catch(InterruptedException ie) {
 				System.err.println(ie);
 			}
-			System.out.println("Active Tasks: " + (this.maxThreads - this.activeThreads.availablePermits()));
-			this.printPoolState();
+			System.out.println("besetzt Semaphore: " + (this.maxThreads - this.activeThreads.availablePermits()) + " | " + this.fjk);
 		}
 		ArrayDeque<Point> result = null;
 		try {
@@ -61,10 +55,6 @@ public class LimitedParallelSolver implements LabyrinthSolver {
 			e.printStackTrace();
 		}	
 		return result.toArray(new Point[0]);
-	}
-
-	private void printPoolState() {
-		System.out.println(this.fjk);
 	}
 
 	public boolean hasPassage(Point current, Point neighbor) {
