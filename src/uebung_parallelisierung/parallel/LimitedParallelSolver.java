@@ -64,6 +64,7 @@ public class LimitedParallelSolver implements LabyrinthSolver {
 	}
 
 	private void printPoolState() {
+		System.out.println(this.fjk);
 	}
 
 	public boolean hasPassage(Point current, Point neighbor) {
