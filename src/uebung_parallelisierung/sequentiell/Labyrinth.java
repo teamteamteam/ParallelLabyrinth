@@ -22,6 +22,7 @@ import java.awt.Graphics;
 import java.awt.GridLayout;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
@@ -416,7 +417,13 @@ private static Labyrinth makeAndSaveLabyrinth(String[] args) {
 			frame.setVisible(true); // will draw the labyrinth (without solution)
 			labyrinth.print();
 		}
-		
+		System.out.println("Press enter to start");
+		try {
+			System.in.read();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		long startTime = System.currentTimeMillis();		
 		labyrinth.solution = labyrinth.solve(solver);
 		long endTime = System.currentTimeMillis();

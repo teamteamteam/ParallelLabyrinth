@@ -37,7 +37,9 @@ public class LimitedParallelSolverTask<T> extends RecursiveTask<T> {
 	private ArrayDeque<Point> collectResults() {
 		// I did not make it, check the others.
 		for(ForkJoinTask<ArrayDeque<Point>> fjt : this.forkedTasks) {
+			System.out.println("Joining task: " + fjt + "...");
 			ArrayDeque<Point> result = fjt.join();
+			System.out.println("Joined task: " + fjt);
 			if(result != null) {
 				this.dataHolder.activeThreads.release();
 				return result;
@@ -96,7 +98,10 @@ public class LimitedParallelSolverTask<T> extends RecursiveTask<T> {
 			}
 			if(newTasks.size() > 0) {
 				// Fork all the tasks!
-				ForkJoinTask.invokeAll(newTasks);
+				for(ForkJoinTask<ArrayDeque<Point>> task: newTasks) {
+					task.fork();
+					System.out.println("Executed task: " + task);
+				}
 				this.forkedTasks.addAll(newTasks);
 			}
 			// Advance to next cell, if any:

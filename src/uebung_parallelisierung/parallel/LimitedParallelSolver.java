@@ -1,7 +1,9 @@
 package uebung_parallelisierung.parallel;
 
 import java.util.ArrayDeque;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -18,20 +20,22 @@ public class LimitedParallelSolver implements LabyrinthSolver {
 	private AtomicIntegerArray visited;
 
 	protected Semaphore activeThreads;
+	protected int maxThreads;
 	
-	private ForkJoinPool fjk;
-	private LimitedParallelSolverTask<ArrayDeque<Point>> initialTask;
+	protected ForkJoinPool fjk;
+	private ForkJoinTask<ArrayDeque<Point>> initialTask;
 	
 	public LimitedParallelSolver() {
 		this.lab = null;
 	}
 
 	public void initializeDatastructure(Labyrinth lab) {
-		this.activeThreads  = new Semaphore(Runtime.getRuntime().availableProcessors()-1);
+		this.maxThreads = 3* Runtime.getRuntime().availableProcessors() - 1;
+		this.activeThreads  = new Semaphore(this.maxThreads);
 		this.lab = lab;
 		this.visited = new AtomicIntegerArray(this.lab.grid.width*this.lab.grid.height);//[this.lab.grid.width][this.lab.grid.height];
 		// ForkJoinTaskThreadPool bauen
-		this.fjk = new ForkJoinPool();
+		this.fjk = new ForkJoinPool(Runtime.getRuntime().availableProcessors());
 		// Initial task bauen
 		this.initialTask = new LimitedParallelSolverTask<ArrayDeque<Point>>(lab.grid.start, lab.grid, new ArrayDeque<Point>(), this);
 
@@ -40,8 +44,26 @@ public class LimitedParallelSolver implements LabyrinthSolver {
 	@Override
 	public Point[] solve(Labyrinth lab) {
 		// Task initial invoken und auf Ergebnis warten
-		ArrayDeque<Point> result = this.fjk.invoke(this.initialTask);
+		this.fjk.execute(this.initialTask);
+		while(this.initialTask.isDone() == false) {
+			try {
+				Thread.sleep(1000);
+			} catch(InterruptedException ie) {
+				System.err.println(ie);
+			}
+			System.out.println("Active Tasks: " + (this.maxThreads - this.activeThreads.availablePermits()));
+			this.printPoolState();
+		}
+		ArrayDeque<Point> result = null;
+		try {
+			result = initialTask.get();
+		} catch (InterruptedException | ExecutionException e) {
+			e.printStackTrace();
+		}	
 		return result.toArray(new Point[0]);
+	}
+
+	private void printPoolState() {
 	}
 
 	public boolean hasPassage(Point current, Point neighbor) {
