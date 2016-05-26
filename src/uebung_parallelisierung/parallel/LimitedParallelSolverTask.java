@@ -53,12 +53,10 @@ public class LimitedParallelSolverTask<T> extends ForkJoinTask<T> {
 		for(ForkJoinTask<ArrayDeque<Point>> fjt : this.forkedTasks) {
 			ArrayDeque<Point> result = fjt.join();
 			if(result != null) {
-				this.dataHolder.activeThreads.release();
 				return result;
 			}
 		}
 		// Return their result if they made it, otherwise null.
-		this.dataHolder.activeThreads.release();
 		return null;
 	}
 	
@@ -153,6 +151,7 @@ public class LimitedParallelSolverTask<T> extends ForkJoinTask<T> {
 		if(this.parentTask != null && this.taskResult != null) {
 			this.parentTask.propagateSuccessfulTask((ArrayDeque<Point>) this.taskResult);
 		}
+		this.dataHolder.activeThreads.release();
 		return true;
 	}
 
