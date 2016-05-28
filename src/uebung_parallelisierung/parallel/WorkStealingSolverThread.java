@@ -1,7 +1,5 @@
 package uebung_parallelisierung.parallel;
 
-import java.util.ArrayDeque;
-import java.util.NoSuchElementException;
 import java.util.concurrent.LinkedBlockingDeque;
 
 import uebung_parallelisierung.sequentiell.Direction;
@@ -24,16 +22,16 @@ public class WorkStealingSolverThread extends Thread {
 	
 	// Container to pass over undone work
 	public class WorkPackage {
-		public final ArrayDeque<Point> pathSoFar;
+		public final LabyrinthPathTreeNode pathSoFar;
 		public final Point next;
-		public WorkPackage(Point next, ArrayDeque<Point> pathSoFar) {
+		public WorkPackage(Point next, LabyrinthPathTreeNode pathSoFar) {
 			this.next = next;
 			this.pathSoFar = pathSoFar;
 		}
 	}
 	
-	public WorkStealingSolverThread.WorkPackage generateWorkPackage(Point next, ArrayDeque<Point> pathSoFar) {
-		return new WorkPackage(next, pathSoFar.clone());
+	public WorkStealingSolverThread.WorkPackage generateWorkPackage(Point next, LabyrinthPathTreeNode pathSoFar) {
+		return new WorkPackage(next, pathSoFar);
 	}
 	
 	public void enqueueWork(WorkPackage initialWork) {
@@ -49,7 +47,7 @@ public class WorkStealingSolverThread extends Thread {
 				try {
 					currentWorkPackage = this.workQueue.takeLast();
 				} catch (InterruptedException e) {
-					e.printStackTrace();
+					return;
 				}
 			}
 			this.process(currentWorkPackage);
@@ -58,11 +56,11 @@ public class WorkStealingSolverThread extends Thread {
 
 	private void process(WorkPackage currentWorkPackage) {
 		Point current = currentWorkPackage.next;
-		ArrayDeque<Point> pathSoFar = currentWorkPackage.pathSoFar;  // Path from start to just before current
+		LabyrinthPathTreeNode pathSoFar = currentWorkPackage.pathSoFar;  // Path from start to just before current
 		while (!current.equals(this.dataHolder.lab.grid.end)) {
 			Point next = null;
 			if(this.dataHolder.tryVisit(current)) {
-				pathSoFar.add(current);
+				pathSoFar = pathSoFar.addChild(new LabyrinthPathTreeNode(pathSoFar, current));
 			} else {
 				// Field was already visited. Aborting this workPackage.
 				return;
@@ -90,10 +88,10 @@ public class WorkStealingSolverThread extends Thread {
 			}
 		}
 		// Polish up the solution by adding the last field
-		pathSoFar.addLast(current);
+		pathSoFar = pathSoFar.addChild(new LabyrinthPathTreeNode(pathSoFar, current));
 		 // Exchange the valid solution.
 		try {
-			this.dataHolder.solutionHandover.exchange(pathSoFar.toArray(new Point[0]));
+			this.dataHolder.solutionHandover.exchange(pathSoFar.getFullPath());
 		} catch (InterruptedException e) {
 			System.err.println(this.logMsg("I was interrupted passing over the solution. DAMN IT!"));
 			e.printStackTrace();

@@ -33,7 +33,6 @@ import java.util.Collections;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.plaf.synth.SynthSplitPaneUI;
 
 import uebung_parallelisierung.parallel.LimitedParallelSolver;
 import uebung_parallelisierung.parallel.ParallelSolver;

@@ -1,6 +1,5 @@
 package uebung_parallelisierung.parallel;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.concurrent.Exchanger;
 import java.util.concurrent.atomic.AtomicIntegerArray;
@@ -20,6 +19,8 @@ public class WorkStealingSolver implements LabyrinthSolver{
 	private AtomicIntegerArray visited;
 	
 	private int nextTargetWorker;
+	
+	public LabyrinthPathTreeNode labyrinthPathTree;
 
 	public void initializeDatastructure(Labyrinth labyrinth) {
 		// Prepare neccessary datastructure
@@ -42,9 +43,11 @@ public class WorkStealingSolver implements LabyrinthSolver{
 
 	@Override
 	public Point[] solve(Labyrinth lab) {
+		// Initialize labyrinthPathTree with starting point
+		labyrinthPathTree = new LabyrinthPathTreeNode(null, null);
 		// Dispatch initial work to first thread and run thems
 		WorkStealingSolverThread firstWorker = this.workerThreads.get(0);
-		WorkPackage initialWork = firstWorker.generateWorkPackage(lab.grid.start, new ArrayDeque<Point>());
+		WorkPackage initialWork = firstWorker.generateWorkPackage(lab.grid.start, labyrinthPathTree);
 		firstWorker.enqueueWork(initialWork);
 		Point[] solution = null;
 		try {
