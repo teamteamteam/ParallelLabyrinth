@@ -1,10 +1,12 @@
 package uebung_parallelisierung.parallel;
 
+import java.util.ArrayDeque;
 import java.util.NoSuchElementException;
 import java.util.concurrent.LinkedBlockingDeque;
 
 import uebung_parallelisierung.sequentiell.Direction;
 import uebung_parallelisierung.sequentiell.Point;
+import uebung_parallelisierung.sequentiell.PointAndDirection;
 
 public class WorkStealingSolverThread extends Thread {
 
@@ -66,37 +68,62 @@ public class WorkStealingSolverThread extends Thread {
 	private void process(WorkPackage currentWorkPackage) {
 		Point current = currentWorkPackage.next;
 		LabyrinthPathTreeNode pathSoFar = currentWorkPackage.pathSoFar;  // Path from start to just before current
+		ArrayDeque<PointAndDirection> backtrackStack = new ArrayDeque<PointAndDirection>(); // Backtracking is still a thing
 		while (!current.equals(this.dataHolder.lab.grid.end)) {
 			Point next = null;
 			if(this.dataHolder.tryVisit(current)) {
 				pathSoFar = pathSoFar.addChild(new LabyrinthPathTreeNode(pathSoFar, current));
 			} else {
-				// Field was already visited. Aborting this workPackage.
-				return;
+				// Do backtracking
+				if (backtrackStack.isEmpty()) {
+					return; // No more backtracking avaible: No solution exists on this work package.
+				}
+				// Backtrack: Continue with cell saved at latest branching point:
+				PointAndDirection pd = backtrackStack.pop();
+				current = pd.getPoint();
+				Point branchingPoint = current.getNeighbor(pd.getDirectionToBranchingPoint());
+				// Remove the dead end from the top of pathSoFar, i.e. all cells after branchingPoint:
+				while (!pathSoFar.getPoint().equals(branchingPoint)) {
+					// DEBUG System.out.println("    Going back before " + pathSoFar.peekLast());
+					pathSoFar = pathSoFar.getParent();
+				}
+				continue; // This is important! We have to visit the new current field again!
 			}
-
 			// Use first random unvisited neighbor as next cell, push others on the backtrack stack: 
 			Direction[] dirs = Direction.values();
 			for (Direction directionToNeighbor: dirs) {
 				Point neighbor = current.getNeighbor(directionToNeighbor);
 				if (this.dataHolder.lab.hasPassage(current, neighbor) && !this.dataHolder.visitedBefore(neighbor)) {
-					boolean queueWorkGlobally = this.dataHolder.workQueue.size() < 10; // This can be fine-tuned to determine when to dispatch work elsewhere.
+					boolean queueWorkGlobally = this.dataHolder.workQueue.size() < 3; // This can be fine-tuned to determine when to dispatch work elsewhere.
 					if (next == null) {
 						// I proceed to go this way
 						next = neighbor;
 					} else {
-						// Everything else will be a new WorkPackage
-						if(queueWorkGlobally == false) {
-							this.enqueueWork(this.generateWorkPackage(neighbor, pathSoFar));
+						// Either backtrack or create a new WorkPackage
+						if(queueWorkGlobally) {
+							this.dataHolder.enqueueWork(this.generateWorkPackage(neighbor, pathSoFar));							
 						} else {
-							this.dataHolder.enqueueWork(this.generateWorkPackage(neighbor, pathSoFar));
+							backtrackStack.push(new PointAndDirection(neighbor, directionToNeighbor.opposite));
 						}
 					}
 				}
 			}
 			// Advance to next cell, if any:
 			if (next == null) {
-				return;
+				// Do backtracking
+				if (backtrackStack.isEmpty()) {
+					return; // No more backtracking avaible: No solution exists on this work package.
+				}
+				// Backtrack: Continue with cell saved at latest branching point:
+				PointAndDirection pd = backtrackStack.pop();
+				current = pd.getPoint();
+				Point branchingPoint = current.getNeighbor(pd.getDirectionToBranchingPoint());
+				// Remove the dead end from the top of pathSoFar, i.e. all cells after branchingPoint:
+				while (!pathSoFar.getPoint().equals(branchingPoint)) {
+					// DEBUG System.out.println("    Going back before " + pathSoFar.peekLast());
+					pathSoFar = pathSoFar.getParent();
+				}
+				continue; // This is important! We have to visit the new current field again!
 			} else {
 				current = next;
 			}

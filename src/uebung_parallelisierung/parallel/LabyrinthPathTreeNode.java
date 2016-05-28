@@ -40,6 +40,9 @@ public final class LabyrinthPathTreeNode {
 		} else if(dx == 0 && dy == -1) {
 			directionIndex = 2; // down
 		}
+		if(directionIndex == -42) {
+			System.err.println("Uh oh, this is impossible!");
+		}
 		return directionIndex;	
 	}
 	
@@ -51,6 +54,14 @@ public final class LabyrinthPathTreeNode {
 			currentNode = currentNode.parent;
 		} while (currentNode.point != null);
 		return fullPath.toArray(new Point[0]);
+	}
+	
+	public Point getPoint() {
+		return this.point;
+	}
+	
+	public LabyrinthPathTreeNode getParent() {
+		return this.parent;
 	}
 	
 }
