@@ -1,8 +1,6 @@
 package uebung_parallelisierung.parallel;
 
 import java.util.ArrayDeque;
-import java.util.NoSuchElementException;
-import java.util.concurrent.LinkedBlockingDeque;
 
 import uebung_parallelisierung.sequentiell.Direction;
 import uebung_parallelisierung.sequentiell.Point;
@@ -13,14 +11,12 @@ public class WorkStealingSolverThread extends Thread {
 	private static int threadCounter = 0;
 	
 	private WorkStealingSolver dataHolder;
-	public LinkedBlockingDeque<WorkPackage> workQueue;
 	
 	// Constructor
 	public WorkStealingSolverThread(WorkStealingSolver dataHolder) {
 		this.setName("WorkStealingThread #" + WorkStealingSolverThread.threadCounter);
 		WorkStealingSolverThread.threadCounter++;
 		this.dataHolder = dataHolder;
-		this.workQueue = new LinkedBlockingDeque<WorkPackage>();
 	}
 	
 	// Container to pass over undone work
@@ -37,10 +33,6 @@ public class WorkStealingSolverThread extends Thread {
 		return new WorkPackage(next, pathSoFar);
 	}
 	
-	public void enqueueWork(WorkPackage initialWork) {
-		this.workQueue.addFirst(initialWork);
-	}
-	
 	// Main run method of thread. Processes WorkPackages, shuts down when interrupted
 	public void run() {
 		while(Thread.interrupted() == false) {
@@ -48,28 +40,30 @@ public class WorkStealingSolverThread extends Thread {
 			WorkPackage currentWorkPackage = null;
 			while(currentWorkPackage == null) {
 				try {
-					//System.out.println(this.logMsg("Elements in local workQueue: " + this.workQueue.size()));
-					// Try local queue first
-					currentWorkPackage = this.workQueue.removeLast();
-				} catch (NoSuchElementException e) {
-					try {
-						// If that did not work wait on global workQueue for work to show up.
-						currentWorkPackage = this.dataHolder.workQueue.takeLast();
-					} catch(InterruptedException ie) {
-						// Probably i have to stop.
-						return;
-					}
+					// If that did not work wait on global workQueue for work to show up.
+					currentWorkPackage = this.dataHolder.workQueue.takeLast();
+				} catch(InterruptedException ie) {
+					// Probably i have to stop.
+					return;
 				}
 			}
-			this.process(currentWorkPackage);
+			try {
+				this.process(currentWorkPackage);				
+			} catch(InterruptedException ie) {
+				// We need to stop now.
+				return;
+			}
 		}
 	}
 
-	private void process(WorkPackage currentWorkPackage) {
+	private void process(WorkPackage currentWorkPackage) throws InterruptedException {
 		Point current = currentWorkPackage.next;
 		LabyrinthPathTreeNode pathSoFar = currentWorkPackage.pathSoFar;  // Path from start to just before current
 		ArrayDeque<PointAndDirection> backtrackStack = new ArrayDeque<PointAndDirection>(); // Backtracking is still a thing
 		while (!current.equals(this.dataHolder.lab.grid.end)) {
+			if(this.isInterrupted()) {
+				throw new InterruptedException("I got interrupted, let's stop now.");
+			}
 			Point next = null;
 			if(this.dataHolder.tryVisit(current)) {
 				pathSoFar = pathSoFar.addChild(new LabyrinthPathTreeNode(pathSoFar, current));

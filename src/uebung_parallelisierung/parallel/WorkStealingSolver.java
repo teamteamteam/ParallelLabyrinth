@@ -19,8 +19,6 @@ public class WorkStealingSolver implements LabyrinthSolver{
 	
 	private AtomicIntegerArray visited;
 	
-	private int nextTargetWorker;
-	
 	public LabyrinthPathTreeNode labyrinthPathTree;
 	
 	public LinkedBlockingDeque<WorkPackage> workQueue;
@@ -43,7 +41,6 @@ public class WorkStealingSolver implements LabyrinthSolver{
 		for(WorkStealingSolverThread workerThread : this.workerThreads) {
 			workerThread.start();
 		}
-		this.nextTargetWorker = 0;
 	}
 
 	@Override
@@ -72,32 +69,9 @@ public class WorkStealingSolver implements LabyrinthSolver{
 		}
 	}
 
-	// Trying to equally distribute work among the workers
+	// Provide some work so everybody who wants one can have one.
 	public void enqueueWork(WorkPackage work) {
-		/*
-		WorkStealingSolverThread leastBusyThread = null;
-		int todoSize = -1;
-		for(WorkStealingSolverThread workerThread : this.workerThreads) {
-			int currentTodoSize = workerThread.workQueue.size();
-			if(todoSize == -1) {
-				todoSize = currentTodoSize;
-				leastBusyThread = workerThread;
-			} else {
-				if(currentTodoSize < todoSize) {
-					todoSize = currentTodoSize;
-					leastBusyThread = workerThread;
-				}
-			}
-		}
-		// Give it to the least busy thread, he should be able to handle it.
-		leastBusyThread.enqueueWork(work);
-		*/
-		/*
-		this.workerThreads.get(this.nextTargetWorker).enqueueWork(work);
-		this.nextTargetWorker = (this.nextTargetWorker + 1 ) % this.workerThreads.size();
-		*/
 		this.workQueue.add(work);
-		//System.out.println("[Main (afterAdd)] Elements in global work queue: " + this.workQueue.size());
 	}
 
 	public boolean tryVisit(Point current) {
