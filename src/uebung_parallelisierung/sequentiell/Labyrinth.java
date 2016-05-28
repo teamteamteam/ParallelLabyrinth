@@ -33,9 +33,11 @@ import java.util.Collections;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.plaf.synth.SynthSplitPaneUI;
 
 import uebung_parallelisierung.parallel.LimitedParallelSolver;
 import uebung_parallelisierung.parallel.ParallelSolver;
+import uebung_parallelisierung.parallel.WorkStealingSolver;
 
 
 
@@ -365,6 +367,7 @@ private static Labyrinth makeAndSaveLabyrinth(String[] args) {
 		}
 
 		Labyrinth labyrinth = makeAndSaveLabyrinth(args);
+		System.out.println("Labyrinth dimensions: " + labyrinth.grid.width + "x" + labyrinth.grid.height);
 
 		// Build the right solver.
 		LabyrinthSolver solver = null;
@@ -378,8 +381,11 @@ private static Labyrinth makeAndSaveLabyrinth(String[] args) {
 			LimitedParallelSolver p = new LimitedParallelSolver();
 			p.initializeDatastructure(labyrinth);
 			solver = p;
-		}
-		
+		} else if(solverName.equals("thread")) {
+				WorkStealingSolver p = new WorkStealingSolver();
+				p.initializeDatastructure(labyrinth);
+				solver = p;
+			}		
 		if (labyrinth.smallEnoughToDisplay()) {
 			frame = new JFrame("Sequential labyrinth solver");
 			frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
