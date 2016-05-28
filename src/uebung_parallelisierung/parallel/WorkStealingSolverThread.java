@@ -1,5 +1,6 @@
 package uebung_parallelisierung.parallel;
 
+import java.util.NoSuchElementException;
 import java.util.concurrent.LinkedBlockingDeque;
 
 import uebung_parallelisierung.sequentiell.Direction;
@@ -45,9 +46,17 @@ public class WorkStealingSolverThread extends Thread {
 			WorkPackage currentWorkPackage = null;
 			while(currentWorkPackage == null) {
 				try {
-					currentWorkPackage = this.workQueue.takeLast();
-				} catch (InterruptedException e) {
-					return;
+					//System.out.println(this.logMsg("Elements in local workQueue: " + this.workQueue.size()));
+					// Try local queue first
+					currentWorkPackage = this.workQueue.removeLast();
+				} catch (NoSuchElementException e) {
+					try {
+						// If that did not work wait on global workQueue for work to show up.
+						currentWorkPackage = this.dataHolder.workQueue.takeLast();
+					} catch(InterruptedException ie) {
+						// Probably i have to stop.
+						return;
+					}
 				}
 			}
 			this.process(currentWorkPackage);
@@ -71,12 +80,17 @@ public class WorkStealingSolverThread extends Thread {
 			for (Direction directionToNeighbor: dirs) {
 				Point neighbor = current.getNeighbor(directionToNeighbor);
 				if (this.dataHolder.lab.hasPassage(current, neighbor) && !this.dataHolder.visitedBefore(neighbor)) {
+					boolean queueWorkGlobally = this.dataHolder.workQueue.size() < 10; // This can be fine-tuned to determine when to dispatch work elsewhere.
 					if (next == null) {
 						// I proceed to go this way
 						next = neighbor;
 					} else {
 						// Everything else will be a new WorkPackage
-						this.dataHolder.enqueueWork(this.generateWorkPackage(neighbor, pathSoFar));
+						if(queueWorkGlobally == false) {
+							this.enqueueWork(this.generateWorkPackage(neighbor, pathSoFar));
+						} else {
+							this.dataHolder.enqueueWork(this.generateWorkPackage(neighbor, pathSoFar));
+						}
 					}
 				}
 			}

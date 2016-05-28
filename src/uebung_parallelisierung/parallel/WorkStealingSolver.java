@@ -2,6 +2,7 @@ package uebung_parallelisierung.parallel;
 
 import java.util.ArrayList;
 import java.util.concurrent.Exchanger;
+import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.atomic.AtomicIntegerArray;
 
 import uebung_parallelisierung.parallel.WorkStealingSolverThread.WorkPackage;
@@ -21,11 +22,15 @@ public class WorkStealingSolver implements LabyrinthSolver{
 	private int nextTargetWorker;
 	
 	public LabyrinthPathTreeNode labyrinthPathTree;
+	
+	public LinkedBlockingDeque<WorkPackage> workQueue;
 
 	public void initializeDatastructure(Labyrinth labyrinth) {
 		// Prepare neccessary datastructure
 		this.lab = labyrinth;
 		this.visited = new AtomicIntegerArray(this.lab.grid.width*this.lab.grid.height);
+		// Create a workQueue
+		this.workQueue = new LinkedBlockingDeque<WorkPackage>();
 		// Create threads
 		int availableProcessors = Runtime.getRuntime().availableProcessors();
 		this.workerThreads = new ArrayList<WorkStealingSolverThread>();
@@ -48,7 +53,7 @@ public class WorkStealingSolver implements LabyrinthSolver{
 		// Dispatch initial work to first thread and run thems
 		WorkStealingSolverThread firstWorker = this.workerThreads.get(0);
 		WorkPackage initialWork = firstWorker.generateWorkPackage(lab.grid.start, labyrinthPathTree);
-		firstWorker.enqueueWork(initialWork);
+		this.enqueueWork(initialWork);
 		Point[] solution = null;
 		try {
 			// Wait for a solution to come up. (being blocked)
@@ -87,8 +92,12 @@ public class WorkStealingSolver implements LabyrinthSolver{
 		// Give it to the least busy thread, he should be able to handle it.
 		leastBusyThread.enqueueWork(work);
 		*/
+		/*
 		this.workerThreads.get(this.nextTargetWorker).enqueueWork(work);
 		this.nextTargetWorker = (this.nextTargetWorker + 1 ) % this.workerThreads.size();
+		*/
+		this.workQueue.add(work);
+		//System.out.println("[Main (afterAdd)] Elements in global work queue: " + this.workQueue.size());
 	}
 
 	public boolean tryVisit(Point current) {
