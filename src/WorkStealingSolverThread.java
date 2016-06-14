@@ -17,15 +17,15 @@ public class WorkStealingSolverThread extends Thread {
 	
 	// Container to pass over undone work
 	public class WorkPackage {
-		public final LabyrinthPathTreeNode pathSoFar;
+		public final ArrayDeque<Point> pathSoFar;
 		public final Point next;
-		public WorkPackage(Point next, LabyrinthPathTreeNode pathSoFar) {
+		public WorkPackage(Point next, ArrayDeque<Point> pathSoFar) {
 			this.next = next;
-			this.pathSoFar = pathSoFar;
+			this.pathSoFar = pathSoFar.clone();
 		}
 	}
 	
-	public WorkStealingSolverThread.WorkPackage generateWorkPackage(Point next, LabyrinthPathTreeNode pathSoFar) {
+	public WorkStealingSolverThread.WorkPackage generateWorkPackage(Point next, ArrayDeque<Point> pathSoFar) {
 		return new WorkPackage(next, pathSoFar);
 	}
 	
@@ -54,7 +54,7 @@ public class WorkStealingSolverThread extends Thread {
 
 	private void process(WorkPackage currentWorkPackage) throws InterruptedException {
 		Point current = currentWorkPackage.next;
-		LabyrinthPathTreeNode pathSoFar = currentWorkPackage.pathSoFar;  // Path from start to just before current
+		ArrayDeque<Point> pathSoFar = currentWorkPackage.pathSoFar;  // Path from start to just before current
 		ArrayDeque<PointAndDirection> backtrackStack = new ArrayDeque<PointAndDirection>(); // Backtracking is still a thing
 		while (!current.equals(this.dataHolder.lab.grid.end)) {
 			if(this.isInterrupted()) {
@@ -62,7 +62,7 @@ public class WorkStealingSolverThread extends Thread {
 			}
 			Point next = null;
 			if(this.dataHolder.tryVisit(current)) {
-				pathSoFar = pathSoFar.addChild(new LabyrinthPathTreeNode(pathSoFar, current));
+				pathSoFar.add(current);
 			} else {
 				// Do backtracking
 				if (backtrackStack.isEmpty()) {
@@ -73,9 +73,9 @@ public class WorkStealingSolverThread extends Thread {
 				current = pd.getPoint();
 				Point branchingPoint = current.getNeighbor(pd.getDirectionToBranchingPoint());
 				// Remove the dead end from the top of pathSoFar, i.e. all cells after branchingPoint:
-				while (!pathSoFar.getPoint().equals(branchingPoint)) {
+				while (!pathSoFar.getLast().equals(branchingPoint)) {
 					// DEBUG System.out.println("    Going back before " + pathSoFar.peekLast());
-					pathSoFar = pathSoFar.getParent();
+					pathSoFar.removeLast();
 				}
 				continue; // This is important! We have to visit the new current field again!
 			}
@@ -109,9 +109,9 @@ public class WorkStealingSolverThread extends Thread {
 				current = pd.getPoint();
 				Point branchingPoint = current.getNeighbor(pd.getDirectionToBranchingPoint());
 				// Remove the dead end from the top of pathSoFar, i.e. all cells after branchingPoint:
-				while (!pathSoFar.getPoint().equals(branchingPoint)) {
+				while (!pathSoFar.getLast().equals(branchingPoint)) {
 					// DEBUG System.out.println("    Going back before " + pathSoFar.peekLast());
-					pathSoFar = pathSoFar.getParent();
+					pathSoFar.removeLast();
 				}
 				continue; // This is important! We have to visit the new current field again!
 			} else {
@@ -119,10 +119,10 @@ public class WorkStealingSolverThread extends Thread {
 			}
 		}
 		// Polish up the solution by adding the last field
-		pathSoFar = pathSoFar.addChild(new LabyrinthPathTreeNode(pathSoFar, current));
+		pathSoFar.addLast(current);
 		 // Exchange the valid solution.
 		try {
-			this.dataHolder.solutionHandover.exchange(pathSoFar.getFullPath());
+			this.dataHolder.solutionHandover.exchange(pathSoFar.toArray(new Point[0]));
 		} catch (InterruptedException e) {
 			System.err.println(this.logMsg("I was interrupted passing over the solution. DAMN IT!"));
 			e.printStackTrace();

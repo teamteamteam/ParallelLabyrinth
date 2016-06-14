@@ -1,5 +1,6 @@
 
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.concurrent.Exchanger;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -14,7 +15,7 @@ public class WorkStealingSolver implements LabyrinthSolver{
 	
 	private AtomicIntegerArray visited;
 	
-	public LabyrinthPathTreeNode labyrinthPathTree;
+	public ArrayDeque<Point> labyrinthPathTree;
 	
 	public LinkedBlockingDeque<WorkStealingSolverThread.WorkPackage> workQueue;
 
@@ -41,7 +42,7 @@ public class WorkStealingSolver implements LabyrinthSolver{
 	@Override
 	public Point[] solve(Labyrinth lab) {
 		// Initialize labyrinthPathTree with starting point
-		labyrinthPathTree = new LabyrinthPathTreeNode(null, null);
+		labyrinthPathTree = new ArrayDeque<Point>();
 		// Dispatch initial work to first thread and run thems
 		WorkStealingSolverThread firstWorker = this.workerThreads.get(0);
 		WorkStealingSolverThread.WorkPackage initialWork = firstWorker.generateWorkPackage(lab.grid.start, labyrinthPathTree);
