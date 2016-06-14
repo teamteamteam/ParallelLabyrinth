@@ -1,4 +1,4 @@
-package uebung_parallelisierung.parallel;
+
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -6,23 +6,19 @@ import java.util.Collection;
 import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.RecursiveTask;
 
-import uebung_parallelisierung.sequentiell.Direction;
-import uebung_parallelisierung.sequentiell.Labyrinth.Grid;
-import uebung_parallelisierung.sequentiell.Point;
-
 public class ParallelSolverTask<T> extends RecursiveTask<T> {
 
 	private static final long serialVersionUID = 1L;
 	
 	private ParallelSolver dataHolder;
 	
-	private Grid grid;
+	private Labyrinth.Grid grid;
 	private Point startPoint;
 	private ArrayDeque<Point> pathSoFar;
 	
 	private Collection<ForkJoinTask<ArrayDeque<Point>>> forkedTasks;
 
-	public ParallelSolverTask(Point startPoint, Grid grid, ArrayDeque<Point> pathSoFar, ParallelSolver dataHolder) {
+	public ParallelSolverTask(Point startPoint, Labyrinth.Grid grid, ArrayDeque<Point> pathSoFar, ParallelSolver dataHolder) {
 		this.forkedTasks = new ArrayList<ForkJoinTask<ArrayDeque<Point>>>(); 
 		this.startPoint = startPoint;
 		this.grid = grid;

@@ -1,14 +1,9 @@
-package uebung_parallelisierung.parallel;
+
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.ForkJoinTask;
-
-import uebung_parallelisierung.sequentiell.Direction;
-import uebung_parallelisierung.sequentiell.Labyrinth.Grid;
-import uebung_parallelisierung.sequentiell.Point;
-import uebung_parallelisierung.sequentiell.PointAndDirection;
 
 public class LimitedParallelSolverTask<T> extends ForkJoinTask<T> {
 
@@ -21,7 +16,7 @@ public class LimitedParallelSolverTask<T> extends ForkJoinTask<T> {
 	private LimitedParallelSolverTask<ArrayDeque<Point>> parentTask;
 	
 	private LimitedParallelSolver dataHolder;
-	private Grid grid;
+	private Labyrinth.Grid grid;
 	private Point startPoint;
 	private ArrayDeque<Point> pathSoFar;
 	private ArrayDeque<PointAndDirection> backtrackStack;
@@ -29,13 +24,13 @@ public class LimitedParallelSolverTask<T> extends ForkJoinTask<T> {
 	private Collection<ForkJoinTask<ArrayDeque<Point>>> forkedTasks;
 
 	// Constructor with parentTask reference
-	public LimitedParallelSolverTask(Point startPoint, Grid grid, ArrayDeque<Point> pathSoFar, LimitedParallelSolver dataHolder, LimitedParallelSolverTask<ArrayDeque<Point>> parentTask) {
+	public LimitedParallelSolverTask(Point startPoint, Labyrinth.Grid grid, ArrayDeque<Point> pathSoFar, LimitedParallelSolver dataHolder, LimitedParallelSolverTask<ArrayDeque<Point>> parentTask) {
 		this(startPoint, grid, pathSoFar, dataHolder); // Invoke default constructor (avoid redundant code)
 		this.parentTask = parentTask;
 	}
 
 	// Default constructor for initial Task
-	public LimitedParallelSolverTask(Point startPoint, Grid grid, ArrayDeque<Point> pathSoFar, LimitedParallelSolver dataHolder) {
+	public LimitedParallelSolverTask(Point startPoint, Labyrinth.Grid grid, ArrayDeque<Point> pathSoFar, LimitedParallelSolver dataHolder) {
 		this.backtrackStack = new ArrayDeque<PointAndDirection>();
 		this.forkedTasks = new ArrayList<ForkJoinTask<ArrayDeque<Point>>>(); 
 		this.startPoint = startPoint;

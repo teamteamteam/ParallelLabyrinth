@@ -1,4 +1,4 @@
-package uebung_parallelisierung.parallel;
+
 
 import java.util.ArrayDeque;
 import java.util.concurrent.ExecutionException;
@@ -6,10 +6,6 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicIntegerArray;
-
-import uebung_parallelisierung.sequentiell.Labyrinth;
-import uebung_parallelisierung.sequentiell.LabyrinthSolver;
-import uebung_parallelisierung.sequentiell.Point;
 
 public class LimitedParallelSolver implements LabyrinthSolver {
 

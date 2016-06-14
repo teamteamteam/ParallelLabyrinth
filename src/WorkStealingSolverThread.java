@@ -1,10 +1,6 @@
-package uebung_parallelisierung.parallel;
+
 
 import java.util.ArrayDeque;
-
-import uebung_parallelisierung.sequentiell.Direction;
-import uebung_parallelisierung.sequentiell.Point;
-import uebung_parallelisierung.sequentiell.PointAndDirection;
 
 public class WorkStealingSolverThread extends Thread {
 

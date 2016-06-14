@@ -1,8 +1,6 @@
-package uebung_parallelisierung.parallel;
+
 
 import java.util.ArrayDeque;
-
-import uebung_parallelisierung.sequentiell.Point;
 
 public final class LabyrinthPathTreeNode {
 

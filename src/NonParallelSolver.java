@@ -1,4 +1,4 @@
-package uebung_parallelisierung.sequentiell;
+
 
 import java.util.ArrayDeque;
 

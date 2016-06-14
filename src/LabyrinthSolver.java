@@ -1,4 +1,4 @@
-package uebung_parallelisierung.sequentiell;
+
 
 public interface LabyrinthSolver {
 

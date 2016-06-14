@@ -1,12 +1,8 @@
-package uebung_parallelisierung.parallel;
+
 
 import java.util.ArrayDeque;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import uebung_parallelisierung.sequentiell.Labyrinth;
-import uebung_parallelisierung.sequentiell.LabyrinthSolver;
-import uebung_parallelisierung.sequentiell.Point;
 
 public class ParallelSolver implements LabyrinthSolver {
 

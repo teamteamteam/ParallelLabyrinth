@@ -5,7 +5,7 @@
  * 
  */
 
-package uebung_parallelisierung.sequentiell;
+
 
 import java.io.Serializable;
 

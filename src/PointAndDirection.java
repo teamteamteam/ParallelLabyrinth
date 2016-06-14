@@ -6,7 +6,7 @@
  *  Source of enum Direction: http://rosettacode.org/wiki/Maze#Java
  */
 
-package uebung_parallelisierung.sequentiell;
+
 
 public final class PointAndDirection {
 	

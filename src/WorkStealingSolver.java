@@ -1,14 +1,9 @@
-package uebung_parallelisierung.parallel;
+
 
 import java.util.ArrayList;
 import java.util.concurrent.Exchanger;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.atomic.AtomicIntegerArray;
-
-import uebung_parallelisierung.parallel.WorkStealingSolverThread.WorkPackage;
-import uebung_parallelisierung.sequentiell.Labyrinth;
-import uebung_parallelisierung.sequentiell.LabyrinthSolver;
-import uebung_parallelisierung.sequentiell.Point;
 
 public class WorkStealingSolver implements LabyrinthSolver{
 
@@ -21,14 +16,14 @@ public class WorkStealingSolver implements LabyrinthSolver{
 	
 	public LabyrinthPathTreeNode labyrinthPathTree;
 	
-	public LinkedBlockingDeque<WorkPackage> workQueue;
+	public LinkedBlockingDeque<WorkStealingSolverThread.WorkPackage> workQueue;
 
 	public void initializeDatastructure(Labyrinth labyrinth) {
 		// Prepare neccessary datastructure
 		this.lab = labyrinth;
 		this.visited = new AtomicIntegerArray(this.lab.grid.width*this.lab.grid.height);
 		// Create a workQueue
-		this.workQueue = new LinkedBlockingDeque<WorkPackage>();
+		this.workQueue = new LinkedBlockingDeque<WorkStealingSolverThread.WorkPackage>();
 		// Create threads
 		int availableProcessors = Runtime.getRuntime().availableProcessors();
 		this.workerThreads = new ArrayList<WorkStealingSolverThread>();
@@ -49,7 +44,7 @@ public class WorkStealingSolver implements LabyrinthSolver{
 		labyrinthPathTree = new LabyrinthPathTreeNode(null, null);
 		// Dispatch initial work to first thread and run thems
 		WorkStealingSolverThread firstWorker = this.workerThreads.get(0);
-		WorkPackage initialWork = firstWorker.generateWorkPackage(lab.grid.start, labyrinthPathTree);
+		WorkStealingSolverThread.WorkPackage initialWork = firstWorker.generateWorkPackage(lab.grid.start, labyrinthPathTree);
 		this.enqueueWork(initialWork);
 		Point[] solution = null;
 		try {
@@ -70,7 +65,7 @@ public class WorkStealingSolver implements LabyrinthSolver{
 	}
 
 	// Provide some work so everybody who wants one can have one.
-	public void enqueueWork(WorkPackage work) {
+	public void enqueueWork(WorkStealingSolverThread.WorkPackage work) {
 		this.workQueue.add(work);
 	}
 
