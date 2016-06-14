@@ -18,6 +18,12 @@ public class WorkStealingSolver implements LabyrinthSolver{
 	public ArrayDeque<Point> labyrinthPathTree;
 	
 	public LinkedBlockingDeque<WorkStealingSolverThread.WorkPackage> workQueue;
+	
+	public final int availableProccesors;
+	
+	public WorkStealingSolver() {
+		this.availableProccesors = Runtime.getRuntime().availableProcessors();
+	}
 
 	public void initializeDatastructure(Labyrinth labyrinth) {
 		// Prepare neccessary datastructure

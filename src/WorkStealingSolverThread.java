@@ -84,7 +84,8 @@ public class WorkStealingSolverThread extends Thread {
 			for (Direction directionToNeighbor: dirs) {
 				Point neighbor = current.getNeighbor(directionToNeighbor);
 				if (this.dataHolder.lab.hasPassage(current, neighbor) && !this.dataHolder.visitedBefore(neighbor)) {
-					boolean queueWorkGlobally = this.dataHolder.workQueue.size() < 3; // This can be fine-tuned to determine when to dispatch work elsewhere.
+					// This can be fine-tuned to determine when to dispatch work elsewhere.
+					boolean queueWorkGlobally = this.dataHolder.workQueue.size() < this.dataHolder.availableProccesors; 
 					if (next == null) {
 						// I proceed to go this way
 						next = neighbor;
