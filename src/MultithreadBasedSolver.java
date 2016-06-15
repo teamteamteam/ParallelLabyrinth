@@ -15,8 +15,6 @@ public class MultithreadBasedSolver implements LabyrinthSolver{
 	
 	private AtomicIntegerArray visited;
 	
-	public ArrayDeque<Point> labyrinthPathTree;
-	
 	public LinkedBlockingDeque<MultithreadBasedSolverThread.WorkPackage> workQueue;
 	
 	public final int availableProccesors;
@@ -47,11 +45,9 @@ public class MultithreadBasedSolver implements LabyrinthSolver{
 
 	@Override
 	public Point[] solve(Labyrinth lab) {
-		// Initialize labyrinthPathTree with starting point
-		labyrinthPathTree = new ArrayDeque<Point>();
 		// Dispatch initial work to first thread and run thems
 		MultithreadBasedSolverThread firstWorker = this.workerThreads.get(0);
-		MultithreadBasedSolverThread.WorkPackage initialWork = firstWorker.generateWorkPackage(lab.grid.start, labyrinthPathTree);
+		MultithreadBasedSolverThread.WorkPackage initialWork = firstWorker.generateWorkPackage(lab.grid.start, new ArrayDeque<Point>());
 		this.enqueueWork(initialWork);
 		Point[] solution = null;
 		try {
