@@ -425,8 +425,8 @@ final public class Labyrinth extends JPanel {
 			 * frame.setVisible(true); // will draw the labyrinth (without
 			 * solution) labyrinth.print(); }
 			 **/
-			System.out.println("Press enter to start");
-			waitForEnterInput();
+			//System.out.println("Press enter to start");
+			//waitForEnterInput();
 			long startTime = System.currentTimeMillis();
 			labyrinth.solution = labyrinth.solve(solver);
 			long endTime = System.currentTimeMillis();
