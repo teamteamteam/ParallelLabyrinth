@@ -61,7 +61,7 @@ public class LimitedParallelSolverTask<T> extends ForkJoinTask<T> {
 		Direction[] dirs = Direction.values(); // static data
 		while(!current.equals(this.grid.end)) {
 			if(this.haveEarlyResult) {
-				System.out.println("I was completed early, returning result! :-)");
+				//System.out.println("I was completed early, returning result! :-)");
 				return this.earlyResult;
 			}
 			// First, mark current field as visited!

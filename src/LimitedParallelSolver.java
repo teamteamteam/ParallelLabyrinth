@@ -42,7 +42,7 @@ public class LimitedParallelSolver implements LabyrinthSolver {
 			} catch(InterruptedException ie) {
 				System.err.println(ie);
 			}
-			System.out.println("besetzt Semaphore: " + (this.maxThreads - this.activeThreads.availablePermits()) + " | " + this.fjk);
+			//System.out.println("besetzt Semaphore: " + (this.maxThreads - this.activeThreads.availablePermits()) + " | " + this.fjk);
 		}
 		ArrayDeque<Point> result = null;
 		try {
