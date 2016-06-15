@@ -386,7 +386,7 @@ final public class Labyrinth extends JPanel {
 				p.initializeDatastructure(labyrinth);
 				solver = p;
 			} else if (solveType == 3) {
-				WorkStealingSolver p = new WorkStealingSolver();
+				MultithreadBasedSolver p = new MultithreadBasedSolver();
 				p.initializeDatastructure(labyrinth);
 				solver = p;
 			}

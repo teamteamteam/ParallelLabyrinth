@@ -2,16 +2,16 @@
 
 import java.util.ArrayDeque;
 
-public class WorkStealingSolverThread extends Thread {
+public class MultithreadBasedSolverThread extends Thread {
 
 	private static int threadCounter = 0;
 	
-	private WorkStealingSolver dataHolder;
+	private MultithreadBasedSolver dataHolder;
 	
 	// Constructor
-	public WorkStealingSolverThread(WorkStealingSolver dataHolder) {
-		this.setName("WorkStealingThread #" + WorkStealingSolverThread.threadCounter);
-		WorkStealingSolverThread.threadCounter++;
+	public MultithreadBasedSolverThread(MultithreadBasedSolver dataHolder) {
+		this.setName("WorkStealingThread #" + MultithreadBasedSolverThread.threadCounter);
+		MultithreadBasedSolverThread.threadCounter++;
 		this.dataHolder = dataHolder;
 	}
 	
@@ -25,7 +25,7 @@ public class WorkStealingSolverThread extends Thread {
 		}
 	}
 	
-	public WorkStealingSolverThread.WorkPackage generateWorkPackage(Point next, ArrayDeque<Point> pathSoFar) {
+	public MultithreadBasedSolverThread.WorkPackage generateWorkPackage(Point next, ArrayDeque<Point> pathSoFar) {
 		return new WorkPackage(next, pathSoFar);
 	}
 	
